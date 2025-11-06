@@ -5,8 +5,13 @@ public class ParallaxController : MonoBehaviour
 {
     [SerializeField] private Transform playerPosition;
 
+    //Dampens the y offset for when the player jumps
     [SerializeField] private float yOffsetMultiplier = .9f;
+
+    //list of the background layers 
     public List<ParallaxLayer> parallaxLayers = new List<ParallaxLayer>();
+    
+    //list of the parallax speeds
     public List<float> parallaxSpeeds = new List<float>();
 
 
@@ -16,6 +21,8 @@ public class ParallaxController : MonoBehaviour
         UpdateParallax();
     }
 
+    //Updates the material offsets of each of the parralax layers, based on the player position. 
+    //The offset change is based on the parallax speed list
     void UpdateParallax()
     {
         for (int i = 0; i < parallaxLayers.Count; i++)

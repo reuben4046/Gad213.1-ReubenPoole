@@ -7,6 +7,8 @@ public class ParallaxLayer : MonoBehaviour
     public Material parrallaxMaterial;
     public Vector2 offset;
 
+    //getting references for the mesh renderer, material and the materials texture offset.
+    // these references are then used by the parallax controller  
     void Start()
     {
         meshRenderer = GetComponent<MeshRenderer>();
