@@ -6,7 +6,8 @@ public class ParallaxController : MonoBehaviour
     [SerializeField] private Transform playerPosition;
 
     //Dampens the y offset for when the player jumps
-    [SerializeField] private float yOffsetMultiplier = .9f;
+    [SerializeField] private bool yMovement = false;
+    [SerializeField] private float yOffsetMultiplier = 10f;
 
     //list of the background layers 
     public List<ParallaxLayer> parallaxLayers = new List<ParallaxLayer>();
@@ -29,7 +30,9 @@ public class ParallaxController : MonoBehaviour
         {
             float parallaxSpeed = parallaxSpeeds[i];
             parallaxLayers[i].offset.x = playerPosition.position.x / parallaxSpeed;
-            parallaxLayers[i].offset.y = playerPosition.position.y / parallaxSpeed / yOffsetMultiplier;
+            // parallaxLayers[i].offset.y = playerPosition.position.y / parallaxSpeed / yOffsetMultiplier;
+            parallaxLayers[i].offset.y = yMovement ? playerPosition.position.y / parallaxSpeed / yOffsetMultiplier : parallaxLayers[i].offset.y;
+
             parallaxLayers[i].parrallaxMaterial.mainTextureOffset = parallaxLayers[i].offset;
         }
     }

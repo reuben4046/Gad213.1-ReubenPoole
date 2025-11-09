@@ -1,12 +1,14 @@
 using System.Collections;
-using System.Drawing;
-using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
     private Rigidbody2D rb;
+    private Animator animator;
+
+    private bool isFacingRight;
 
     [SerializeField] private LedgeDetection topLedgeCollider;
     [SerializeField] private LedgeDetection bottomLedgeCollider;
@@ -36,7 +38,9 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        isFacingRight = true;
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
         StartCoroutine(GravityController());
     }
 
@@ -44,31 +48,46 @@ public class PlayerController : MonoBehaviour
     {
         horizontalInput = Input.GetAxis("Horizontal");
 
-        // Coyote time
-        if (IsGrounded()) coyoteTimer = coyoteTime;
-        else coyoteTimer -= Time.deltaTime;
-
-        // jump buffer
-        if (Input.GetKeyDown(KeyCode.Space)) jumpBufferCount = jumpBufferLength;
-        else jumpBufferCount -= Time.deltaTime;
-
-        // jump
-        if (jumpBufferCount >= 0 && coyoteTimer > 0f && rb.linearVelocity.y < 0)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            jumpBufferCount = 0;
-        }
-
-        // variable jump height
-        if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocity.y > 0)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f);
-        }
-
+        Animation();
+        CoyoteTime();
+        JumpBuffer();
+        Jump();
+        VariableJumpHeight();
         //ledge hop
-        DetectLedges();
+        //DetectLedges();
     }
 
+    void Animation()
+    {
+        if (IsGrounded()) animator.SetBool("isGrounded", true);
+        else animator.SetBool("isGrounded", false);
+
+        if (rb.linearVelocity.y > 0) animator.SetBool("isAscending", true);
+        else animator.SetBool("isAscending", false);
+
+        if (rb.linearVelocity.y < 0) animator.SetBool("isDescending", true);
+        else animator.SetBool("isDescending", false);
+
+        if (horizontalInput != 0) animator.SetBool("isWalking", true);
+        else animator.SetBool("isWalking", false);
+
+        if (!isFacingRight && horizontalInput > 0)
+        {
+            FlipSprite();
+        }
+        else if (isFacingRight && horizontalInput < 0)
+        {
+            FlipSprite();
+        }
+    }
+
+    public void FlipSprite()
+    {
+        isFacingRight = !isFacingRight;
+        Vector3 localScale = transform.localScale;
+        localScale.x *= -1f;
+        transform.localScale = localScale;
+    }
     void FixedUpdate()
     {
         float xSpeedTarget = horizontalInput * maxMoveSpeed;
@@ -83,12 +102,41 @@ public class PlayerController : MonoBehaviour
         rb.AddForce(new Vector2(forceX, 0f), ForceMode2D.Force);
     }
 
+    void CoyoteTime()
+    {
+        if (IsGrounded()) coyoteTimer = coyoteTime;
+        else coyoteTimer -= Time.deltaTime;
+    }
+
+    void JumpBuffer()
+    {
+        if (Input.GetKeyDown(KeyCode.Space)) jumpBufferCount = jumpBufferLength;
+        else jumpBufferCount -= Time.deltaTime;
+    }
+
+    void Jump()
+    {
+        if (jumpBufferCount >= 0 && coyoteTimer > 0f && rb.linearVelocity.y <= 0)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            jumpBufferCount = 0;
+        }
+    }
+
+    void VariableJumpHeight()
+    {
+        // variable jump height
+        if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocity.y > 0)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f);
+        }
+    }
+
     private bool IsGrounded()
     {
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, transform.localScale.y / 2 + 0.1f, groundLayerMask);
         return hit.collider != null;
     }
-
 
     public void AddPushPullForce(Vector2 force)
     {
